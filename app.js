@@ -1,3 +1,18 @@
+// ── FIREBASE INIT ─────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBLS9Qxt-aHRhgzf0CtegeVg5CdByA3ouc",
+  authDomain: "plan2026-b945e.firebaseapp.com",
+  projectId: "plan2026-b945e",
+  storageBucket: "plan2026-b945e.firebasestorage.app",
+  messagingSenderId: "663556645289",
+  appId: "1:663556645289:web:e1bb6a241df259442664b8",
+  measurementId: "G-BL9PDSYY0Z"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const DOC_REF = db.collection('plans').doc('main');
+
 // ── DATA ──────────────────────────────────────────
 const DEFAULTS={
   groups:[
@@ -27,9 +42,88 @@ const DEFAULTS={
   }
 };
 
-function load(){const r=localStorage.getItem('cdg2026v5');if(!r)return JSON.parse(JSON.stringify(DEFAULTS));try{const d=JSON.parse(r);if(!d.customEvents)d.customEvents=[];return d;}catch{return JSON.parse(JSON.stringify(DEFAULTS));}}
-function save(){localStorage.setItem('cdg2026v5',JSON.stringify(D));}
-let D=load();
+// Load from localStorage first (instant), then sync from Firestore
+function loadLocal(){
+  const r=localStorage.getItem('cdg2026v5');
+  if(!r)return JSON.parse(JSON.stringify(DEFAULTS));
+  try{const d=JSON.parse(r);if(!d.customEvents)d.customEvents=[];return d;}
+  catch{return JSON.parse(JSON.stringify(DEFAULTS));}
+}
+
+// Save to both localStorage AND Firestore
+let _saveTimer=null;
+function save(){
+  // Instant local save
+  localStorage.setItem('cdg2026v5',JSON.stringify(D));
+  // Debounced cloud save (waits 800ms to batch rapid changes)
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>{
+    DOC_REF.set({data:JSON.stringify(D),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+      .then(()=>{console.log('☁️ Guardado en la nube');showSyncStatus('synced');})
+      .catch(err=>{console.error('❌ Error guardando en la nube:',err);showSyncStatus('error');});
+  },800);
+  showSyncStatus('saving');
+}
+
+// Sync indicator
+function showSyncStatus(status){
+  let el=document.getElementById('sync-status');
+  if(!el){
+    el=document.createElement('div');el.id='sync-status';
+    el.style.cssText='position:fixed;bottom:70px;right:16px;z-index:50;font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;display:flex;align-items:center;gap:5px;transition:all .3s;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  if(status==='saving'){el.style.background='rgba(255,159,10,.15)';el.style.color='#FF9F0A';el.textContent='☁️ Guardando...';el.style.opacity='1';}
+  else if(status==='synced'){el.style.background='rgba(52,199,89,.15)';el.style.color='#34C759';el.textContent='✓ Sincronizado';el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2000);}
+  else if(status==='error'){el.style.background='rgba(255,59,48,.15)';el.style.color='#FF3B30';el.textContent='⚠ Error de red';el.style.opacity='1';setTimeout(()=>el.style.opacity='0',4000);}
+  else if(status==='loaded'){el.style.background='rgba(0,122,255,.15)';el.style.color='#007AFF';el.textContent='☁️ Datos cargados';el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2500);}
+}
+
+// Load from Firestore and merge (async, runs after initial render)
+function syncFromCloud(){
+  DOC_REF.get().then(doc=>{
+    if(doc.exists&&doc.data().data){
+      const cloudData=JSON.parse(doc.data().data);
+      if(cloudData.customEvents===undefined)cloudData.customEvents=[];
+      // Use cloud data as source of truth
+      D=cloudData;
+      localStorage.setItem('cdg2026v5',JSON.stringify(D));
+      // Re-render current view
+      renderDash();
+      showSyncStatus('loaded');
+      console.log('☁️ Datos sincronizados desde la nube');
+    } else {
+      // No data in cloud yet — upload local data
+      console.log('☁️ Primera vez — subiendo datos locales a la nube');
+      save();
+    }
+  }).catch(err=>{
+    console.warn('⚠️ No se pudo conectar a la nube, usando datos locales:',err);
+    showSyncStatus('error');
+  });
+}
+
+// Listen for real-time changes from other devices/tabs
+function listenForChanges(){
+  DOC_REF.onSnapshot(doc=>{
+    if(!doc.exists||!doc.data().data)return;
+    const cloudData=JSON.parse(doc.data().data);
+    if(cloudData.customEvents===undefined)cloudData.customEvents=[];
+    // Only update if cloud data is different from local
+    const localStr=JSON.stringify(D);
+    const cloudStr=JSON.stringify(cloudData);
+    if(localStr!==cloudStr){
+      D=cloudData;
+      localStorage.setItem('cdg2026v5',JSON.stringify(D));
+      renderDash();
+      showSyncStatus('loaded');
+    }
+  },err=>{
+    console.warn('⚠️ Error en listener de tiempo real:',err);
+  });
+}
+
+let D=loadLocal();
 
 // ── Tokens ────────────────────────────────────────
 const GCOL={
@@ -517,7 +611,14 @@ renderDash();
 document.getElementById('n-dash').querySelector('.nav-icon-wrap').style.background='var(--sys-blue)';
 document.getElementById('n-dash').querySelector('.nav-icon-wrap').style.color='white';
 
+// Sync from Firebase after initial render (non-blocking)
+setTimeout(()=>{
+  syncFromCloud();
+  listenForChanges();
+},500);
+
 setTimeout(()=>{
   if('Notification' in window&&Notification.permission==='default')
     toast('🔔 Activa notificaciones en la barra lateral');
 },3000);
+
