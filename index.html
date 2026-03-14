@@ -534,6 +534,23 @@
   </div>
 </div>
 
+<!-- Prayer day picker -->
+<div id="m-pray-day" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title" id="m-pray-day-title">Cambiar persona</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group"><label class="inp-label">Elegir de la lista</label><select id="pray-day-sel" class="inp"></select></div>
+    <div class="inp-group"><label class="inp-label">O escribe un nombre</label><input id="pray-day-custom" type="text" class="inp" placeholder="Nombre personalizado..."></div>
+    <div class="action-group row">
+      <button class="btn btn-primary" style="flex:1" onclick="doSavePrayDay()">Guardar</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAll()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>

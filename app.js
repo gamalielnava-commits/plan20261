@@ -315,13 +315,25 @@ function removeMember(gid,name){if(!confirm(`¿Quitar a "${name}"?`))return;cons
 
 // ── CALENDAR ──────────────────────────────────────
 function renderCal(){
-  document.getElementById('cal-view').innerHTML=MONTHS.map(mo=>{
+  // Recurring schedule note
+  let calHtml=`<div class="card" style="margin-bottom:16px;border-left:3px solid var(--sys-blue)">
+    <div class="card-body" style="padding:12px 16px">
+      <div style="font-size:13px;font-weight:700;color:var(--sys-blue);margin-bottom:6px">📋 Actividades semanales recurrentes</div>
+      <div style="font-size:13px;color:var(--label-2);line-height:1.8">
+        ⛪ <strong>Culto Dominical</strong> — cada domingo<br>
+        👥 <strong>Reunión Líderes</strong> — cada lunes 7:30 PM<br>
+        ${D.groups.map(g=>`📖 <strong>${esc(g.name)}</strong> — cada ${g.day} ${g.time}`).join('<br>')}
+      </div>
+    </div>
+  </div>`;
+
+  calHtml+=MONTHS.map(mo=>{
     const evts=getMonthEvents(mo.y,mo.m);
     return`<div class="cal-month-card">
       <div class="cal-month-header">
         <div style="display:flex;align-items:center;gap:8px">
           <div class="cal-month-name">${mo.n} ${mo.y}</div>
-          <div class="cal-month-count">${evts.length} eventos</div>
+          <div class="cal-month-count">${evts.length} evento${evts.length!==1?'s':''}</div>
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-sm btn-secondary" onclick="exportMonthICS(${mo.y},${mo.m})">📥</button>
@@ -330,30 +342,22 @@ function renderCal(){
       </div>
       ${evts.map(e=>{
         const cc=CAT[e.cat]||CAT.general;
-        return`<div class="cal-row" onclick="openEventDetail(${JSON.stringify(e).replace(/"/g,'&quot;')})">
+        return`<div class="cal-row" onclick="openEventDetail(${JSON.stringify(e).replace(/\"/g,'&quot;')})">
           <div class="cal-date-block"><div class="cal-day-num">${e.dn}</div><div class="cal-day-name">${e.dayName}</div></div>
           <div class="cal-dot" style="background:${cc.dot}"></div>
           <div class="cal-info"><div class="cal-event-title">${e.icon} ${e.title}</div><div class="cal-event-sub">${e.sub||''}</div></div>
           <div class="cal-tag" style="background:${cc.bg};color:${cc.txt}">${CAT_NAME[e.cat]||'General'}</div>
         </div>`;
       }).join('')}
-      ${evts.length===0?`<div class="empty-state" style="padding:20px"><div class="empty-icon" style="font-size:28px">📅</div><div class="empty-label">Sin eventos</div></div>`:''}
+      ${evts.length===0?`<div class="empty-state" style="padding:20px"><div class="empty-icon" style="font-size:28px">📅</div><div class="empty-label">Sin eventos especiales este mes</div><div class="empty-sub">Toca ＋ para agregar uno</div></div>`:''}
     </div>`;
   }).join('');
+  document.getElementById('cal-view').innerHTML=calHtml;
 }
 
 function getMonthEvents(y,m){
-  const evts=[],days=new Date(y,m+1,0).getDate();
-  const wed=byDay('Miércoles'),fri=byDay('Viernes');
-  for(let d=1;d<=days;d++){
-    const dow=new Date(y,m,d).getDay();
-    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dn=DAYS[dow];
-    if(dow===0)evts.push({dn:d,dayName:dn,icon:'⛪',title:'Culto Dominical',sub:'Servicio congregacional',cat:'general',date:ds});
-    if(dow===1)evts.push({dn:d,dayName:dn,icon:'👥',title:'Reunión Equipo Líderes',sub:'7:30 PM · Líderes',cat:'general',date:ds});
-    if(dow===3)evts.push({dn:d,dayName:dn,icon:'📖',title:'Grupos Miércoles',sub:wed+' · 7:30 PM',cat:'general',date:ds});
-    if(dow===5)evts.push({dn:d,dayName:dn,icon:'📖',title:'Grupo Viernes',sub:fri+' · 7:30 PM',cat:'general',date:ds});
-  }
+  const evts=[];
+  // Only special events — NO weekly recurring ones
   const add=(dates,cat,icon,title,sub)=>dates.forEach(ds=>{const dt=new Date(ds+'T12:00:00');if(dt.getFullYear()===y&&dt.getMonth()===m)evts.push({dn:dt.getDate(),dayName:DAYS[dt.getDay()],icon,title,sub,cat,date:ds});});
   add(D.activities.women,'women','👩','Actividad Ministerio Mujeres','Cada 2 meses');
   add(D.activities.menBreak,'men','🥞','Desayuno de Hombres','Evento especial');
@@ -434,6 +438,25 @@ function openEventDetail(e){
 }
 
 // ── PRAYER ────────────────────────────────────────
+function getPrayAssign(w,d){
+  // Check for custom assignment first, then fall back to rotation
+  if(!D.prayerAssignments)D.prayerAssignments={};
+  const key=`w${w}-${d}`;
+  if(D.prayerAssignments[key])return D.prayerAssignments[key];
+  if(!D.prayerList.length)return '—';
+  return D.prayerList[(w*7+d)%D.prayerList.length];
+}
+function setPrayAssign(w,d,name){
+  if(!D.prayerAssignments)D.prayerAssignments={};
+  const key=`w${w}-${d}`;
+  if(name){
+    D.prayerAssignments[key]=name;
+  } else {
+    delete D.prayerAssignments[key];
+  }
+  save();renderPray();toast('✓ Asignación actualizada');
+}
+
 function renderPray(){
   document.getElementById('pray-list-rows').innerHTML=D.prayerList.length?
     D.prayerList.map((name,i)=>`
@@ -449,19 +472,58 @@ function renderPray(){
   let html='';
   for(let w=0;w<24;w++){
     const isNow=w===wk,wd=weekInfo(w);
-    const assigns=DAYS.map((_,i)=>members[(w*7+i)%members.length]);
     html+=`<div class="pray-week-card ${isNow?'current':''}">
       <div class="pray-week-header">
         <div class="pray-week-label">${isNow?'⭐ ':''}Semana ${w+1} · ${wd.label}</div>
-        ${isNow?'<div class="pray-week-badge">Esta semana</div>':''}
+        <div style="display:flex;gap:6px;align-items:center">
+          ${isNow?'<div class="pray-week-badge">Esta semana</div>':''}
+          <button class="btn btn-xs btn-secondary" onclick="resetWeekAssign(${w})" title="Restablecer rotación automática" style="font-size:10px">↺ Auto</button>
+        </div>
       </div>
       <div class="pray-day-grid">
-        ${assigns.map((n,i)=>`<div class="pray-day-cell"><div class="pray-day-lbl">${DAYS[i]}</div><div class="pray-day-name">${n}</div></div>`).join('')}
+        ${DAYS.map((_,i)=>{
+          const assigned=getPrayAssign(w,i);
+          const hasCustom=D.prayerAssignments&&D.prayerAssignments[`w${w}-${i}`];
+          return`<div class="pray-day-cell" onclick="openPrayDayPicker(${w},${i})" style="cursor:pointer">
+            <div class="pray-day-lbl">${DAYS[i]}</div>
+            <div class="pray-day-name" style="${hasCustom?'border:1.5px solid rgba(0,122,255,.3);':''}" title="Toca para cambiar">${assigned} <span style="font-size:8px;opacity:.5">✎</span></div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   }
   document.getElementById('pray-view').innerHTML=html;
 }
+
+function resetWeekAssign(w){
+  if(!D.prayerAssignments)return;
+  for(let i=0;i<7;i++)delete D.prayerAssignments[`w${w}-${i}`];
+  save();renderPray();toast('↺ Semana restaurada a rotación automática');
+}
+
+let _prayPickerCtx=null;
+function openPrayDayPicker(w,d){
+  _prayPickerCtx={w,d};
+  const current=getPrayAssign(w,d);
+  // Build picker modal
+  const el=document.getElementById('m-pray-day');
+  document.getElementById('m-pray-day-title').textContent=`${DAYS[d]} — Semana ${w+1}`;
+  const sel=document.getElementById('pray-day-sel');
+  sel.innerHTML='<option value="">— Rotación automática —</option>'+
+    D.prayerList.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('');
+  document.getElementById('pray-day-custom').value='';
+  el.style.display='flex';
+}
+function doSavePrayDay(){
+  if(!_prayPickerCtx)return;
+  const{w,d}=_prayPickerCtx;
+  const custom=document.getElementById('pray-day-custom').value.trim();
+  const selected=document.getElementById('pray-day-sel').value;
+  const name=custom||selected;
+  setPrayAssign(w,d,name);
+  document.getElementById('m-pray-day').style.display='none';
+}
+
 function updatePrayName(index,newName){
   const name=newName.trim();
   if(name&&name!==D.prayerList[index]){D.prayerList[index]=name;save();toast('✓ Nombre actualizado');}
@@ -764,7 +826,7 @@ function generateWordReport(){
 
 // ── CLOSE ─────────────────────────────────────────
 function closeAll(){
-  ['m-add','m-role','m-schedule','m-pray','m-event','m-event-detail'].forEach(id=>document.getElementById(id).style.display='none');
+  ['m-add','m-role','m-schedule','m-pray','m-event','m-event-detail','m-pray-day'].forEach(id=>document.getElementById(id).style.display='none');
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll();});
 document.getElementById('add-name').addEventListener('keydown',e=>{if(e.key==='Enter')doAddMember();});
