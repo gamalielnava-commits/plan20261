@@ -157,6 +157,8 @@
           <button class="quick-link" onclick="showTab('share')">🔗 Compartir Cal.</button>
           <button class="quick-link" onclick="exportAllICS()">🍎 Exportar iCal</button>
           <button class="quick-link" onclick="openAddEvent('')">➕ Nuevo Evento</button>
+          <button class="quick-link" onclick="generateWordReport()" style="background:rgba(0,122,255,.12);color:#007AFF">📄 Generar Reporte Word</button>
+          <button class="quick-link" onclick="shareViaWhatsApp()" style="background:rgba(37,211,102,.12);color:#25D366">💬 Compartir por WhatsApp</button>
         </div>
       </div>
     </div>
@@ -192,11 +194,25 @@
         <div class="page-title">Calendario</div>
         <div class="page-subtitle">Mar – Ago 2026</div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="exportAllICS()">📥 .ics</button>
         <button class="btn btn-primary btn-sm" onclick="openAddEvent('')">＋ Evento</button>
+        <button class="btn btn-sm" style="background:rgba(37,211,102,.15);color:#25D366" onclick="shareViaWhatsApp()">💬 WhatsApp</button>
       </div>
     </div>
+
+    <!-- Calendar share banner -->
+    <div class="cal-share-card" style="margin-bottom:16px">
+      <div class="cal-share-title">📲 Añade el calendario a tu celular</div>
+      <div class="cal-share-sub">Toca un botón para agregar todos los eventos automáticamente</div>
+      <div class="cal-export-grid">
+        <button class="cal-export-btn btn-gcal" onclick="addAllToGoogleCal()">📅 Google Calendar</button>
+        <button class="cal-export-btn btn-ical" onclick="exportAllICS()">🍎 Apple / iCal</button>
+        <button class="cal-export-btn btn-webcal" onclick="shareViaWhatsApp()">💬 Compartir WhatsApp</button>
+        <button class="cal-export-btn btn-outlook" onclick="copyCalendarLink()">🔗 Copiar Enlace</button>
+      </div>
+    </div>
+
     <div id="cal-view"></div>
   </div>
 

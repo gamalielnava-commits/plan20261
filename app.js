@@ -598,6 +598,170 @@ function exportAllICS(){
 }
 function openGCalAll(){window.open('https://calendar.google.com/calendar/r','_blank');}
 
+// ── SHARE VIA WHATSAPP ────────────────────────────
+function shareViaWhatsApp(){
+  const siteUrl=window.location.href.split('?')[0].split('#')[0];
+  let msg=`⛪ *Casa de Dios — Plan de Trabajo 2026*\n\n`;
+  msg+=`📅 *Calendario Mar – Ago 2026*\n\n`;
+  msg+=`📖 *Grupos semanales:*\n`;
+  D.groups.forEach(g=>msg+=`  • ${g.name} — ${g.day} ${g.time} (Líder: ${g.leader})\n`);
+  msg+=`\n⛪ Cultos: Domingo\n👥 Líderes: Lunes 7:30 PM\n`;
+  msg+=`\n🗓 *Eventos especiales:*\n`;
+  (D.activities.women||[]).forEach(d=>msg+=`  👩 Ministerio Mujeres — ${fmtDate(d)}\n`);
+  (D.activities.menBreak||[]).forEach(d=>msg+=`  🥞 Desayuno Hombres — ${fmtDate(d)}\n`);
+  (D.activities.fasting||[]).forEach(d=>msg+=`  ✨ Ayuno — ${fmtDate(d)}\n`);
+  (D.customEvents||[]).forEach(e=>msg+=`  ${CAT_ICON[e.cat]||'📌'} ${e.title} — ${fmtDate(e.start)}\n`);
+  msg+=`\n🙏 *Oración:* 6:00 AM · 20 min diarios\n`;
+  msg+=`\n🔗 *Ve el plan completo aquí:*\n${siteUrl}\n`;
+  msg+=`\n📲 Descarga el calendario (.ics) desde la página para añadirlo a tu celular.`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+  toast('💬 Abriendo WhatsApp...');
+}
+
+// ── ADD ALL TO GOOGLE CALENDAR ────────────────────
+function addAllToGoogleCal(){
+  // Open Google Calendar with the first important event, then prompt for .ics import
+  const url=buildGCalLink({
+    title:'Casa de Dios — Plan 2026 (Importar calendario completo)',
+    start:'2026-03-15',end:'2026-08-31',
+    timeStart:'10:00',timeEnd:'12:00',
+    desc:'Descarga el archivo .ics desde '+window.location.href+' e impórtalo en Google Calendar: Ajustes > Importar y exportar > Importar',
+    location:'Casa de Dios'
+  });
+  window.open(url,'_blank');
+  // Also download the ICS
+  setTimeout(()=>exportAllICS(),500);
+  toast('📅 Abriendo Google Calendar + descargando .ics');
+}
+
+// ── COPY CALENDAR LINK ────────────────────────────
+function copyCalendarLink(){
+  const url=window.location.href.split('?')[0].split('#')[0];
+  const text=`⛪ Calendario Casa de Dios 2026\n📲 ${url}\n\nAbre el enlace y descarga el .ics para añadir todos los eventos a tu calendario.`;
+  navigator.clipboard?.writeText(text).then(()=>toast('✓ Enlace copiado al portapapeles')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✓ Enlace copiado');
+  });
+}
+
+// ── GENERATE WORD REPORT ──────────────────────────
+function generateWordReport(){
+  const today=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const wk=curWeek();
+
+  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>Plan 2026 Casa de Dios</title>
+<style>
+  body{font-family:'Calibri',sans-serif;color:#222;margin:40px;line-height:1.6}
+  h1{color:#1a3a6b;font-size:24pt;border-bottom:3px solid #007AFF;padding-bottom:8px;margin-bottom:16px}
+  h2{color:#007AFF;font-size:16pt;margin-top:28px;margin-bottom:10px;border-left:4px solid #007AFF;padding-left:10px}
+  h3{color:#5856D6;font-size:13pt;margin-top:16px;margin-bottom:6px}
+  table{border-collapse:collapse;width:100%;margin:10px 0 16px}
+  th{background:#007AFF;color:white;padding:8px 12px;text-align:left;font-size:10pt}
+  td{border:1px solid #ddd;padding:6px 12px;font-size:10pt}
+  tr:nth-child(even){background:#f8f9fa}
+  .badge{display:inline-block;background:#007AFF;color:white;padding:2px 10px;border-radius:12px;font-size:9pt;font-weight:bold}
+  .meta{color:#666;font-size:10pt;margin-bottom:20px}
+  .section{page-break-inside:avoid}
+  ul{margin:4px 0 12px 20px}
+  li{margin:3px 0}
+  .footer{margin-top:40px;padding-top:12px;border-top:2px solid #eee;color:#999;font-size:9pt;text-align:center}
+</style></head><body>`;
+
+  // HEADER
+  html+=`<h1>⛪ Casa de Dios — Plan de Trabajo 2026</h1>`;
+  html+=`<p class="meta">📅 Generado el ${today} · Semana ${wk+1} de 24 · Progreso: ${Math.round((wk/24)*100)}%</p>`;
+
+  // RESUMEN
+  html+=`<div class="section"><h2>📊 Resumen General</h2>`;
+  html+=`<table><tr><th>Indicador</th><th>Valor</th></tr>`;
+  html+=`<tr><td>Grupos activos</td><td>${D.groups.length}</td></tr>`;
+  html+=`<tr><td>Total de miembros</td><td>${totalMembers()}</td></tr>`;
+  html+=`<tr><td>Semana actual</td><td>${wk+1} de 24</td></tr>`;
+  html+=`<tr><td>Personas en plan de oración</td><td>${D.prayerList.length}</td></tr>`;
+  html+=`<tr><td>Eventos personalizados</td><td>${(D.customEvents||[]).length}</td></tr>`;
+  html+=`</table></div>`;
+
+  // GRUPOS
+  html+=`<div class="section"><h2>👥 Grupos</h2>`;
+  D.groups.forEach(g=>{
+    html+=`<h3>${g.name} — ${g.day} ${g.time}</h3>`;
+    html+=`<table><tr><th>Rol</th><th>Nombre</th></tr>`;
+    html+=`<tr><td>👑 Líder</td><td>${g.leader}</td></tr>`;
+    html+=`<tr><td>🤝 Asistente</td><td>${g.assistant}</td></tr>`;
+    html+=`<tr><td>🏠 Anfitrión</td><td>${g.host}</td></tr>`;
+    html+=`</table>`;
+    html+=`<p><strong>Miembros (${g.members.length}):</strong> ${g.members.join(', ')}</p>`;
+  });
+  html+=`</div>`;
+
+  // CALENDARIO
+  html+=`<div class="section"><h2>📅 Calendario de Eventos Especiales</h2>`;
+  html+=`<table><tr><th>Fecha</th><th>Evento</th><th>Categoría</th></tr>`;
+  (D.activities.women||[]).forEach(d=>html+=`<tr><td>${fmtDate(d)}</td><td>Actividad Ministerio Mujeres</td><td>👩 Mujeres</td></tr>`);
+  (D.activities.menBreak||[]).forEach(d=>html+=`<tr><td>${fmtDate(d)}</td><td>Desayuno de Hombres</td><td>🥞 Hombres</td></tr>`);
+  (D.activities.fasting||[]).forEach(d=>html+=`<tr><td>${fmtDate(d)}</td><td>Ayuno Congregacional</td><td>✨ Ayuno</td></tr>`);
+  (D.customEvents||[]).forEach(e=>html+=`<tr><td>${fmtDate(e.start)}</td><td>${e.title}</td><td>${CAT_ICON[e.cat]||'📌'} ${CAT_NAME[e.cat]||'General'}</td></tr>`);
+  html+=`</table>`;
+  html+=`<p><strong>Actividades recurrentes:</strong></p><ul>`;
+  html+=`<li>⛪ Culto Dominical — cada domingo</li>`;
+  html+=`<li>👥 Reunión de Líderes — cada lunes 7:30 PM</li>`;
+  D.groups.forEach(g=>html+=`<li>📖 ${g.name} — cada ${g.day} ${g.time}</li>`);
+  html+=`</ul></div>`;
+
+  // ORACIÓN
+  html+=`<div class="section"><h2>🙏 Plan de Oración</h2>`;
+  html+=`<p><strong>Horario:</strong> 6:00 AM · 20 minutos · Rotación automática</p>`;
+  html+=`<p><strong>Participantes (${D.prayerList.length}):</strong></p>`;
+  html+=`<table><tr><th>#</th><th>Nombre</th></tr>`;
+  D.prayerList.forEach((n,i)=>html+=`<tr><td>${i+1}</td><td>${n}</td></tr>`);
+  html+=`</table>`;
+
+  // Semana actual de oración
+  if(D.prayerList.length){
+    const assigns=DAYS.map((_,i)=>D.prayerList[(wk*7+i)%D.prayerList.length]);
+    html+=`<p><strong>Esta semana (Semana ${wk+1}):</strong></p>`;
+    html+=`<table><tr>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr>`;
+    html+=`<tr>${assigns.map(n=>`<td>${n}</td>`).join('')}</tr></table>`;
+  }
+  html+=`</div>`;
+
+  // METAS
+  if(D.goalProgress&&Object.keys(D.goalProgress).length){
+    html+=`<div class="section"><h2>🎯 Progreso de Metas</h2>`;
+    D.groups.forEach(g=>{
+      html+=`<h3>${g.name}</h3><table><tr><th>Meta</th><th>Progreso</th></tr>`;
+      const GOAL_DEFS_RPT=[
+        {id:'attend',title:'Asistencia'},{id:'growth',title:'Crecimiento'},
+        {id:'study',title:'Estudio Bíblico'},{id:'prayer',title:'Oración'},
+        {id:'serve',title:'Servicio'}
+      ];
+      GOAL_DEFS_RPT.forEach(gd=>{
+        const key=`${g.id}-${gd.id}`,pct=D.goalProgress[key]||0;
+        html+=`<tr><td>${gd.title}</td><td>${pct}%</td></tr>`;
+      });
+      html+=`</table>`;
+    });
+    html+=`</div>`;
+  }
+
+  // NOTAS
+  if(D.notes){
+    html+=`<div class="section"><h2>📝 Notas del Equipo</h2>`;
+    html+=`<p>${D.notes.replace(/\n/g,'<br>')}</p></div>`;
+  }
+
+  // FOOTER
+  html+=`<div class="footer">Casa de Dios · Plan de Trabajo 2026 · Generado desde plan20261.vercel.app · ${today}</div>`;
+  html+=`</body></html>`;
+
+  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`Plan-2026-Casa-de-Dios-${new Date().toISOString().split('T')[0]}.doc`;
+  a.click();
+  toast('📄 Reporte Word generado');
+}
+
 // ── CLOSE ─────────────────────────────────────────
 function closeAll(){
   ['m-add','m-role','m-schedule','m-pray','m-event','m-event-detail'].forEach(id=>document.getElementById(id).style.display='none');
