@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Casa de Dios · Plan 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">⛪</div>
+      <div>
+        <div class="sidebar-logo-name">Casa de Dios</div>
+        <div class="sidebar-logo-sub">Plan de Trabajo · 2026</div>
+      </div>
+    </div>
+    <div class="sidebar-progress" style="margin-top:14px">
+      <div class="sp-label">
+        <span>Progreso del plan</span>
+        <span id="sb-pct2">0%</span>
+      </div>
+      <div class="sp-track"><div class="sp-fill" id="sb-bar2" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Principal</div>
+    <div class="nav-item active" onclick="showTab('dash')" id="n-dash">
+      <div class="nav-icon-wrap" style="background:var(--sys-blue);color:white">📊</div>
+      <span class="nav-item-label">Inicio</span>
+    </div>
+    <div class="nav-item" onclick="showTab('grupos')" id="n-grupos">
+      <div class="nav-icon-wrap">👥</div>
+      <span class="nav-item-label">Grupos</span>
+    </div>
+    <div class="nav-item" onclick="showTab('cal')" id="n-cal">
+      <div class="nav-icon-wrap">📅</div>
+      <span class="nav-item-label">Calendario</span>
+    </div>
+
+    <div class="nav-section-label">Disciplinas</div>
+    <div class="nav-item" onclick="showTab('pray')" id="n-pray">
+      <div class="nav-icon-wrap">🙏</div>
+      <span class="nav-item-label">Oración</span>
+    </div>
+    <div class="nav-item" onclick="showTab('metas')" id="n-metas">
+      <div class="nav-icon-wrap">🎯</div>
+      <span class="nav-item-label">Metas</span>
+    </div>
+    <div class="nav-item" onclick="showTab('share')" id="n-share">
+      <div class="nav-icon-wrap">🔗</div>
+      <span class="nav-item-label">Compartir Cal.</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="sidebar-btn" onclick="exportAllICS()">📥 Exportar</button>
+    <button class="sidebar-btn" onclick="requestNotifPerm()">🔔 Alertas</button>
+  </div>
+</aside>
+
+<!-- ══════════ CONTENT ══════════ -->
+<div class="main-content">
+
+  <!-- Mobile top bar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-icon">⛪</div>
+      <span class="topbar-name">Casa de Dios</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" onclick="exportAllICS()">📥</button>
+      <button class="topbar-btn" onclick="openAddEvent('')">＋</button>
+    </div>
+  </div>
+
+  <!-- ═════ DASHBOARD ═════ -->
+  <div class="page active" id="s-dash">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Inicio</div>
+        <div class="page-subtitle" id="wk-label">Semana 1 de 24</div>
+      </div>
+    </div>
+
+    <div class="stats-grid stagger">
+      <div class="stat-card fade-up">
+        <div class="stat-icon-row">
+          <div class="stat-icon-bg" style="background:rgba(0,122,255,.1)">👥</div>
+        </div>
+        <div class="stat-value" id="st-g">4</div>
+        <div class="stat-label">Grupos activos</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-icon-row">
+          <div class="stat-icon-bg" style="background:rgba(52,199,89,.1)">🙋</div>
+        </div>
+        <div class="stat-value" id="st-m">27</div>
+        <div class="stat-label">Miembros</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-icon-row">
+          <div class="stat-icon-bg" style="background:rgba(88,86,214,.1)">📆</div>
+        </div>
+        <div class="stat-value" id="st-w">—</div>
+        <div class="stat-label">Semana actual</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-icon-row">
+          <div class="stat-icon-bg" style="background:rgba(255,159,10,.1)">✅</div>
+        </div>
+        <div class="stat-value" id="st-c" style="color:var(--sys-blue)">0%</div>
+        <div class="stat-label">Esta semana</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- Checklist -->
+      <div class="card fade-up">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Actividades de esta semana</div>
+          </div>
+        </div>
+        <div class="prog-bar-row">
+          <div class="prog-track"><div class="prog-fill" id="week-bar" style="width:0%"></div></div>
+          <div class="prog-pct" id="week-pct">0%</div>
+        </div>
+        <div id="checklist"></div>
+      </div>
+
+      <!-- Upcoming -->
+      <div class="card fade-up">
+        <div class="card-header">
+          <div class="card-title">Próximas actividades</div>
+          <button class="btn btn-sm btn-secondary" onclick="showTab('cal')">Ver todo</button>
+        </div>
+        <div id="upcoming"></div>
+      </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="card fade-up">
+      <div class="card-body">
+        <div class="quick-links">
+          <a href="https://discipulapp.org" target="_blank" class="quick-link">📊 DiscipulApp</a>
+          <button class="quick-link" onclick="showTab('pray')">🙏 Plan Oración</button>
+          <button class="quick-link" onclick="showTab('cal')">📅 Calendario</button>
+          <button class="quick-link" onclick="showTab('share')">🔗 Compartir Cal.</button>
+          <button class="quick-link" onclick="exportAllICS()">🍎 Exportar iCal</button>
+          <button class="quick-link" onclick="openAddEvent('')">➕ Nuevo Evento</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <div class="card-title">Notas del equipo</div>
+        <button class="btn btn-sm btn-primary" onclick="saveNotes()" id="save-notes-btn">Guardar</button>
+      </div>
+      <div class="card-body">
+        <textarea id="team-notes" class="notes-area" placeholder="Avisos, peticiones de oración, recordatorios..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ GRUPOS ═════ -->
+  <div class="page" id="s-grupos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Grupos</div>
+        <div class="page-subtitle">Edita directamente en las tarjetas</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">＋ Persona</button>
+    </div>
+    <div id="groups-grid" class="groups-grid"></div>
+  </div>
+
+  <!-- ═════ CALENDARIO ═════ -->
+  <div class="page" id="s-cal">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Calendario</div>
+        <div class="page-subtitle">Mar – Ago 2026</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="exportAllICS()">📥 .ics</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddEvent('')">＋ Evento</button>
+      </div>
+    </div>
+    <div id="cal-view"></div>
+  </div>
+
+  <!-- ═════ ORACIÓN ═════ -->
+  <div class="page" id="s-pray">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Oración</div>
+        <div class="page-subtitle">6:00 AM · 20 min · rotación automática</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openPrayModal()">＋ Persona</button>
+    </div>
+
+    <div class="grouped-section">
+      <div class="grouped-header">Lista de oración</div>
+      <div class="grouped-list pray-list-edit" id="pray-list-rows"></div>
+    </div>
+
+    <div class="divider-label">Plan semanal rotativo</div>
+    <div id="pray-view"></div>
+  </div>
+
+  <!-- ═════ METAS ═════ -->
+  <div class="page" id="s-metas">
+    <div class="page-title" style="margin-bottom:6px">Metas</div>
+    <div class="page-subtitle">Por grupo · ajusta el progreso con el slider</div>
+    <div id="metas-view"></div>
+  </div>
+
+  <!-- ═════ COMPARTIR CALENDARIO ═════ -->
+  <div class="page" id="s-share">
+    <div class="page-title" style="margin-bottom:6px">Compartir Calendario</div>
+    <div class="page-subtitle">Conecta con Google, Apple, Outlook o cualquier app</div>
+
+    <div class="grouped-section">
+      <div class="grouped-header">Generar enlace personalizado</div>
+      <div class="cal-share-card">
+        <div class="cal-share-title">📧 Enviar a una persona</div>
+        <div class="cal-share-sub">Ingresa el correo y genera un enlace de suscripción al calendario de Casa de Dios.</div>
+        <div class="email-connect">
+          <input type="email" id="share-email" class="email-inp" placeholder="correo@ejemplo.com">
+          <button class="btn btn-primary" onclick="generateShareLink()">Generar</button>
+        </div>
+        <div id="share-link-area" style="display:none">
+          <div class="inp-label">Enlace para suscribirse al calendario:</div>
+          <div class="cal-link-box" onclick="copyCalLink()">
+            <span class="cal-link-text" id="share-link-text"></span>
+            <span class="cal-link-copy">Copiar</span>
+          </div>
+          <div class="cal-export-grid" style="margin-top:8px">
+            <button class="cal-export-btn btn-gcal" onclick="openGCalLink()">📅 Abrir en Google</button>
+            <button class="cal-export-btn btn-ical" onclick="openAppleCal()">🍎 Abrir en Apple</button>
+            <button class="cal-export-btn btn-webcal" onclick="openWebcal()">📡 WebCal / Subscribir</button>
+            <button class="cal-export-btn btn-outlook" onclick="openOutlook()">📧 Outlook</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grouped-section">
+      <div class="grouped-header">Exportar archivo</div>
+      <div class="grouped-list">
+        <div class="list-row tappable" onclick="exportAllICS()">
+          <div class="list-row-icon" style="background:rgba(0,122,255,.1)">📥</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Descargar .ics completo</div>
+            <div class="list-row-sub">Todos los eventos Mar–Ago 2026</div>
+          </div>
+          <div class="list-row-right"><span class="list-chevron">›</span></div>
+        </div>
+        <div class="list-row tappable" onclick="openGCalAll()">
+          <div class="list-row-icon" style="background:rgba(234,67,53,.1)">📅</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Google Calendar</div>
+            <div class="list-row-sub">Abrir en Google Calendar</div>
+          </div>
+          <div class="list-row-right"><span class="list-chevron">›</span></div>
+        </div>
+        <div class="list-row tappable" onclick="openAppleCalDirect()">
+          <div class="list-row-icon" style="background:rgba(0,122,255,.1)">🍎</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Apple Calendar / iCal</div>
+            <div class="list-row-sub">Descargar y abrir en Apple Calendar</div>
+          </div>
+          <div class="list-row-right"><span class="list-chevron">›</span></div>
+        </div>
+        <div class="list-row tappable" onclick="openOutlookDirect()">
+          <div class="list-row-icon" style="background:rgba(0,114,198,.1)">📧</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Outlook</div>
+            <div class="list-row-sub">Importar en Microsoft Outlook</div>
+          </div>
+          <div class="list-row-right"><span class="list-chevron">›</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grouped-section">
+      <div class="grouped-header">Exportar por mes</div>
+      <div class="grouped-list" id="month-export-list"></div>
+    </div>
+
+    <div class="grouped-section">
+      <div class="grouped-header">Instrucciones</div>
+      <div class="grouped-list">
+        <div class="list-row">
+          <div class="list-row-icon" style="background:rgba(52,199,89,.1)">1️⃣</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Descarga el archivo .ics</div>
+            <div class="list-row-sub">Haz clic en "Descargar .ics completo"</div>
+          </div>
+        </div>
+        <div class="list-row">
+          <div class="list-row-icon" style="background:rgba(0,122,255,.1)">2️⃣</div>
+          <div class="list-row-content">
+            <div class="list-row-title">En Google Calendar</div>
+            <div class="list-row-sub">Ajustes → Importar y exportar → Importar</div>
+          </div>
+        </div>
+        <div class="list-row">
+          <div class="list-row-icon" style="background:rgba(175,82,222,.1)">3️⃣</div>
+          <div class="list-row-content">
+            <div class="list-row-title">En iPhone / Mac</div>
+            <div class="list-row-sub">Abre el .ics → "Añadir todos" → Listo</div>
+          </div>
+        </div>
+        <div class="list-row">
+          <div class="list-row-icon" style="background:rgba(255,159,10,.1)">4️⃣</div>
+          <div class="list-row-content">
+            <div class="list-row-title">Suscripción WebCal (actualización automática)</div>
+            <div class="list-row-sub">Usa el enlace webcal:// para sincronización continua</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Mobile bottom tabs -->
+<nav class="bottom-tabs">
+  <div class="tab-item active" onclick="showTab('dash')" id="bt-dash">
+    <div class="tab-icon">📊</div>
+    <div class="tab-label">Inicio</div>
+    <div class="tab-icon-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('grupos')" id="bt-grupos">
+    <div class="tab-icon">👥</div>
+    <div class="tab-label">Grupos</div>
+    <div class="tab-icon-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('cal')" id="bt-cal">
+    <div class="tab-icon">📅</div>
+    <div class="tab-label">Calendario</div>
+    <div class="tab-icon-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('pray')" id="bt-pray">
+    <div class="tab-icon">🙏</div>
+    <div class="tab-label">Oración</div>
+    <div class="tab-icon-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('metas')" id="bt-metas">
+    <div class="tab-icon">🎯</div>
+    <div class="tab-label">Metas</div>
+    <div class="tab-icon-dot"></div>
+  </div>
+</nav>
+
+<!-- Toast -->
+<div id="toast">✓ Copiado</div>
+
+<!-- ═══ MODALS ═══ -->
+<div id="m-add" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title">Añadir persona</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group"><label class="inp-label">Nombre completo</label><input id="add-name" type="text" class="inp" placeholder="Nombre..."></div>
+    <div class="inp-group"><label class="inp-label">Grupo</label><select id="add-group" class="inp"><option value="">Seleccionar...</option></select></div>
+    <div class="inp-group"><label class="inp-label">Rol</label>
+      <select id="add-role" class="inp">
+        <option value="member">Miembro</option>
+        <option value="leader">Líder</option>
+        <option value="assistant">Asistente</option>
+        <option value="host">Anfitrión</option>
+      </select>
+    </div>
+    <div class="action-group row">
+      <button class="btn btn-primary" style="flex:1" onclick="doAddMember()">Guardar</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAll()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-role" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title" id="m-role-title">Cambiar rol</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group"><label class="inp-label">Elegir de miembros</label><select id="role-sel" class="inp"></select></div>
+    <div class="inp-group"><label class="inp-label">O escribe un nombre</label><input id="role-inp" type="text" class="inp" placeholder="Nombre personalizado..."></div>
+    <div class="action-group row">
+      <button class="btn btn-primary" style="flex:1" onclick="doSaveRole()">Guardar</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAll()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-schedule" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title" id="m-sched-title">Editar horario</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group">
+      <label class="inp-label">Día de reunión</label>
+      <div class="chip-wrap">
+        <div class="chip" onclick="selDay('Lunes')">Lunes</div>
+        <div class="chip" onclick="selDay('Martes')">Martes</div>
+        <div class="chip" onclick="selDay('Miércoles')">Miércoles</div>
+        <div class="chip" onclick="selDay('Jueves')">Jueves</div>
+        <div class="chip" onclick="selDay('Viernes')">Viernes</div>
+        <div class="chip" onclick="selDay('Sábado')">Sábado</div>
+        <div class="chip" onclick="selDay('Domingo')">Domingo</div>
+      </div>
+    </div>
+    <div class="inp-group">
+      <label class="inp-label">Horario</label>
+      <div class="chip-wrap">
+        <div class="chip" onclick="selTime('6:00 PM')">6:00 PM</div>
+        <div class="chip" onclick="selTime('6:30 PM')">6:30 PM</div>
+        <div class="chip" onclick="selTime('7:00 PM')">7:00 PM</div>
+        <div class="chip" onclick="selTime('7:30 PM')">7:30 PM</div>
+        <div class="chip" onclick="selTime('8:00 PM')">8:00 PM</div>
+        <div class="chip" onclick="selTime('8:30 PM')">8:30 PM</div>
+      </div>
+      <input id="time-custom" type="text" class="inp" placeholder="Otro horario: ej. 5:00 PM" style="margin-top:8px">
+    </div>
+    <div class="action-group row">
+      <button class="btn btn-primary" style="flex:1" onclick="doSaveSched()">Guardar</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAll()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-pray" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title">Añadir al plan de oración</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group"><label class="inp-label">Nombre completo</label><input id="pray-name" type="text" class="inp" placeholder="Nombre..."></div>
+    <div class="action-group row">
+      <button class="btn btn-primary" style="flex:1" onclick="doAddPray()">Añadir</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAll()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-event" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title" id="m-event-title">Nuevo evento</div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div class="inp-group"><label class="inp-label">Título</label><input id="ev-title" type="text" class="inp" placeholder="Nombre del evento..."></div>
+    <div class="inp-row">
+      <div><label class="inp-label">Fecha inicio</label><input id="ev-start" type="date" class="inp"></div>
+      <div><label class="inp-label">Fecha fin</label><input id="ev-end" type="date" class="inp"></div>
+    </div>
+    <div class="inp-row">
+      <div><label class="inp-label">Hora inicio</label><input id="ev-time-start" type="time" class="inp" value="19:30"></div>
+      <div><label class="inp-label">Hora fin</label><input id="ev-time-end" type="time" class="inp" value="21:00"></div>
+    </div>
+    <div class="inp-group"><label class="inp-label">Categoría</label>
+      <select id="ev-cat" class="inp">
+        <option value="general">📌 General</option>
+        <option value="women">👩 Ministerio Mujeres</option>
+        <option value="men">🥞 Ministerio Hombres</option>
+        <option value="fasting">✨ Ayuno</option>
+        <option value="special">⭐ Especial</option>
+        <option value="prayer">🙏 Oración</option>
+      </select>
+    </div>
+    <div class="inp-group"><label class="inp-label">Lugar (opcional)</label><input id="ev-location" type="text" class="inp" placeholder="Dirección o nombre..."></div>
+    <div class="inp-group"><label class="inp-label">Descripción (opcional)</label><textarea id="ev-desc" class="inp inp-ta" placeholder="Detalles adicionales..."></textarea></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="doSaveEvent()">Guardar evento</button>
+    <div id="ev-export-row" style="display:none" class="cal-export-grid">
+      <button id="ev-gcal-btn" class="cal-export-btn btn-gcal">📅 Google Calendar</button>
+      <button id="ev-ical-btn" class="cal-export-btn btn-ical">🍎 Apple / iCal</button>
+    </div>
+  </div>
+</div>
+
+<div id="m-event-detail" class="overlay" style="display:none" onclick="if(event.target===this)closeAll()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-row">
+      <div class="modal-title" id="m-evd-title"></div>
+      <button class="btn-icon" onclick="closeAll()">✕</button>
+    </div>
+    <div id="m-evd-body" style="margin-bottom:20px;font-size:15px;color:var(--label-2);line-height:1.8"></div>
+    <div class="cal-export-grid" style="margin-bottom:10px">
+      <button id="m-evd-gcal" class="cal-export-btn btn-gcal">📅 Google Calendar</button>
+      <button id="m-evd-ical" class="cal-export-btn btn-ical">🍎 Apple / iCal</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="m-evd-edit" class="btn btn-secondary" style="flex:1;display:none">✏️ Editar</button>
+      <button id="m-evd-del"  class="btn btn-danger"    style="flex:1;display:none">🗑 Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
